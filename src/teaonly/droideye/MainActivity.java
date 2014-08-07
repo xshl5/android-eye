@@ -78,6 +78,13 @@ public class MainActivity extends Activity
 
     private AudioRecord audioCapture = null;
     private StreamingLoop audioLoop = null;
+    
+    private int natMappingInternalPort = 8080;
+    private int natMappingExternalPort = 40713;
+    private int natMappingIPV6 = 0;
+    private String natMappingProtocol = "tcp";
+    private String natMappingDescription = "libminiupnpc";
+    private String natMappingInterface = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -91,10 +98,10 @@ public class MainActivity extends Activity
         setContentView(R.layout.main);
 
         //setup adView
-        LinearLayout layout = (LinearLayout)findViewById(R.id.layout_setup);
-        adView = new AdView(this, AdSize.BANNER, "a1507f940fc****");
-        layout.addView(adView);
-        adView.loadAd(new AdRequest());
+//        LinearLayout layout = (LinearLayout)findViewById(R.id.layout_setup);
+//        adView = new AdView(this, AdSize.BANNER, "a1507f940fc****");
+//        layout.addView(adView);
+//        adView.loadAd(new AdRequest());
 
         btnExit = (Button)findViewById(R.id.btn_exit);
         btnExit.setOnClickListener(exitAction);
@@ -107,6 +114,7 @@ public class MainActivity extends Activity
 
         System.loadLibrary("mp3encoder");
         System.loadLibrary("natpmp");
+        System.loadLibrary("miniupnpc");
 
         initAudio();
         initCamera();
@@ -152,6 +160,9 @@ public class MainActivity extends Activity
         //cameraView_.Release();
         audioLoop.ReleaseLoop();
         audioCapture.release();
+        
+        nativeXshl5RedirectRemove("" + natMappingExternalPort, natMappingProtocol, 
+        		natMappingIPV6, natMappingInterface);
     
         //System.exit(0);
         finish();
@@ -235,8 +246,8 @@ public class MainActivity extends Activity
         }
         if ( webServer != null) {
             tvMessage1.setText( getString(R.string.msg_access_local) + " http://" + ipAddr  + ":8080" );
-            //tvMessage2.setText( getString(R.string.msg_access_query));
-            //tvMessage2.setVisibility(View.VISIBLE);
+            tvMessage2.setText( getString(R.string.msg_access_query));
+            tvMessage2.setVisibility(View.VISIBLE);
             NatPMPClient natQuery = new NatPMPClient();
             natQuery.start();  
             return true;
@@ -432,18 +443,24 @@ public class MainActivity extends Activity
     }
 
     
-    static private native String nativeQueryInternet();    
+    static private native String nativeQueryInternet();
+    static private native String nativeXshl5Redirect(int privatePort, int externalPort, int ipv6,
+            String protocol, String description, String interfaceOrIpaddr);
+    static private native int nativeXshl5RedirectRemove(String externalPort, String protocol,
+            int ipv6, String interfaceOrIpaddr);
     private class NatPMPClient extends Thread {
         String queryResult;
         Handler handleQueryResult = new Handler(getMainLooper());  
         @Override
         public void run(){
-            queryResult = nativeQueryInternet();
+//            queryResult = nativeQueryInternet();
+        	queryResult = nativeXshl5Redirect(natMappingInternalPort, natMappingExternalPort, 
+        			natMappingIPV6, natMappingProtocol, natMappingDescription, natMappingInterface);
             if ( queryResult.startsWith("error:") ) {
                 handleQueryResult.post( new Runnable() {
                     @Override
                     public void run() {
-                        tvMessage2.setText( getString(R.string.msg_access_query_error));                        
+                        tvMessage2.setText( getString(R.string.msg_access_query_error));
                     }
                 });
             } else {
