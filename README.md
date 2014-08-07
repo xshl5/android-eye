@@ -25,7 +25,6 @@ https://play.google.com/store/apps/details?id=teaonly.droideye
 *  2012-10-28  Fixed small bugs, added audio flash player in Web page.
 *  2012-10-30  Finished audio support.
 *  2012-11-02  Added uPnp port mapping support, but need more testing.
-*  
 
 ## Update by Xshl5 ##
 
