@@ -43,6 +43,7 @@ var onImageLoadError = function() {
 
 var onQueryDone = function (ret) {
     $("#btn_play").button('enable');
+    $("#btn_switch").button('enable');
     
     $("#resolution-choice").empty();
     var resList = ret.split("|");
@@ -90,6 +91,7 @@ var playClick = function () {
         $("#btn_play").val("Stop").button("refresh");
         $("#resolution-choice").selectmenu("disable");
         $("#checkbox-audio").checkboxradio('disable');
+        $("#btn_switch").button('disable');
         
         refreshLive();
 
@@ -103,6 +105,7 @@ var playClick = function () {
         $("#btn_play").val("Play").button("refresh");
         $("#resolution-choice").selectmenu("enable");
         $("#checkbox-audio").checkboxradio('enable');
+        $("#btn_switch").button('enable');
         audioPlayer.stop();
         audioPlayer.close();
     }
@@ -111,6 +114,41 @@ var playClick = function () {
 var onSetupOK = function() {
     var targetIndex = $("#resolution-choice").val();
     currentSize = supportedSize[targetIndex]; 
+};
+
+function updateSupportRes() { //n ms
+	$.ajax({
+        type: "GET",
+        url: basicURL + "cgi/query",
+        cache: false,
+        error: onHttpError,
+        success: onQueryDone
+    });
+}  
+
+var doSwitchCam = function () {
+	var camid = 0; // back camera
+	var btn_switch = document.getElementById("btn_switch");
+	if ( btn_switch.title == 'Back Camera' ) {
+		camid = 1; // front camera
+		btn_switch.title = "Front Camera";
+	}
+	else
+	{
+		btn_switch.title = 'Back Camera';
+		camid = 0;
+	}
+	
+	$.ajax({
+        type: "GET",
+        url: basicURL + "cgi/setup",
+        cache: false,
+        data: "camid=" + camid,
+        success: onSetupOK
+    });
+    
+    // updateSupportRes
+    setTimeout("updateSupportRes()", 1000);
 };
 
 var doChangeRes = function () {
@@ -161,6 +199,9 @@ $("#page_main").live("pageinit", function() {
 
     $("#btn_play").button('disable');
     $("#btn_play").bind("click", playClick);
+    
+    $("#btn_switch").button('disable');
+    $("#btn_switch").bind("click", doSwitchCam); 
     
     initAudioPlayer();
 

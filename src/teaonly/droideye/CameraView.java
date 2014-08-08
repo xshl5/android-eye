@@ -74,6 +74,37 @@ public class CameraView implements SurfaceHolder.Callback{
         }
     }
     
+    public void setupCamera(int camid, PreviewCallback cb) {
+    	if( Camera.getNumberOfCameras() <= 1)
+    		return;
+    	
+    	if ( camera_ != null) {
+            camera_.stopPreview();
+            camera_.release();
+            camera_ = null;
+        }
+    	
+    	// 0, back camera; 1 for front camera
+    	camera_ = Camera.open(getFrontOrBackCam(camid));
+        procSize_ = camera_.new Size(0, 0);
+        Camera.Parameters p = camera_.getParameters();        
+       
+        supportedSizes = p.getSupportedPreviewSizes();
+        procSize_ = supportedSizes.get( supportedSizes.size()/2 );
+        p.setPreviewSize(procSize_.width, procSize_.height);
+        
+        camera_.setParameters(p);
+        camera_.setPreviewCallback(cb);
+        //camera_.setDisplayOrientation(90);
+        try {
+            camera_.setPreviewDisplay(surfaceHolder_);
+        } catch ( Exception ex) {
+            ex.printStackTrace(); 
+        }
+        
+        camera_.startPreview();
+    }
+    
     public void setupCamera(int wid, int hei, PreviewCallback cb) {
         procSize_.width = wid;
         procSize_.height = hei;
@@ -86,7 +117,8 @@ public class CameraView implements SurfaceHolder.Callback{
     }
 
     private void setupCamera() {
-        camera_ = Camera.open();
+    	// default open the backcam
+        camera_ = Camera.open(getFrontOrBackCam(0));
         procSize_ = camera_.new Size(0, 0);
         Camera.Parameters p = camera_.getParameters();        
        
@@ -102,7 +134,42 @@ public class CameraView implements SurfaceHolder.Callback{
             ex.printStackTrace(); 
         }
         camera_.startPreview();    
-    }  
+    }
+    
+    // code, 0 for backcam; 1 for frontcam
+    private int getFrontOrBackCam(int code)
+    {
+    	 int camid = 0;
+    	 int cameraCount = 0;  
+    	   
+    	 Camera.CameraInfo cameraInfo = new Camera.CameraInfo();  
+    	 cameraCount = Camera.getNumberOfCameras(); // get cameras number
+    	 if(cameraCount <= 1)
+    		 return camid;
+    	         
+    	 for ( int camIdx = 0; camIdx < cameraCount;camIdx++ ) {  
+    	     Camera.getCameraInfo( camIdx, cameraInfo ); // get camerainfo  
+    	     // find a backcam
+    	     if ( code == 0 ) {
+    	    	 if(cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_BACK)
+    	    	 {
+    	    		 camid = camIdx;
+        	    	 break;
+    	    	 }
+    	     }
+    	     // find a frontcam
+    	     else
+    	     {
+    	    	 if(cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT)
+    	    	 {
+    	    		 camid = camIdx;
+        	    	 break;
+    	    	 }
+    	     }
+    	 }
+    	 
+    	 return camid;
+    }
     
     private Camera.AutoFocusCallback afcb = new Camera.AutoFocusCallback() {
         @Override

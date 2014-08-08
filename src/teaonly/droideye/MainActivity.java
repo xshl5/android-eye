@@ -235,7 +235,7 @@ public class MainActivity extends Activity
         String ipAddr = getLocalIpAddress();
         if ( ipAddr != null ) {
             try{
-                webServer = new TeaServer(8080, this); 
+                webServer = new TeaServer(natMappingInternalPort, this); 
                 webServer.registerCGI("/cgi/query", doQuery);
                 webServer.registerCGI("/cgi/setup", doSetup);
                 webServer.registerCGI("/stream/live.jpg", doCapture);
@@ -304,12 +304,22 @@ public class MainActivity extends Activity
     private TeaServer.CommonGatewayInterface doSetup = new TeaServer.CommonGatewayInterface () {
         @Override
         public String run(Properties parms) {
-            int wid = Integer.parseInt(parms.getProperty("wid")); 
-            int hei = Integer.parseInt(parms.getProperty("hei"));
-            Log.d("TEAONLY", ">>>>>>>run in doSetup wid = " + wid + " hei=" + hei);
-            cameraView_.StopPreview();
-            cameraView_.setupCamera(wid, hei, previewCb_);
-            cameraView_.StartPreview();
+        	if(parms.getProperty("camid") != null)
+        	{
+        		Log.d("TEAONLY", ">>>>>>>run in doSetup camid = " + parms.getProperty("camid"));
+        		int camid = Integer.parseInt(parms.getProperty("camid"));
+
+                cameraView_.setupCamera(camid, previewCb_);
+        	}
+        	else
+        	{
+        		int wid = Integer.parseInt(parms.getProperty("wid")); 
+                int hei = Integer.parseInt(parms.getProperty("hei"));
+                Log.d("TEAONLY", ">>>>>>>run in doSetup wid = " + wid + " hei=" + hei);
+                cameraView_.StopPreview();
+                cameraView_.setupCamera(wid, hei, previewCb_);
+                cameraView_.StartPreview();
+        	}
             return "OK";
         }   
  
