@@ -29,3 +29,4 @@ https://play.google.com/store/apps/details?id=teaonly.droideye
 ## Update by Xshl5 ##
 
 *  2014-08-07  Added libminiupnpc and upnp port mapping support(by tested).
+*  Added switching between back_camera and front_camera support.
